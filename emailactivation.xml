@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5" type="plugin" group="user" method="upgrade">
+	<name>Email Activation</name>
+	<author>Piotr Gasiorowski</author>
+	<creationDate>November 2011</creationDate>
+	<copyright>Social Software Development, 2011-2013</copyright>
+	<license>GPLv2 or later</license>
+	<authorEmail>woodzu123@gmail.com</authorEmail>
+	<version>1.3.0</version>
+	<description>To prevent dummy emails with this plugin every time users change their email address in profile, they will be required to activate it by using a link from activation email.</description>
+	<files>
+		<filename plugin="emailactivation">emailactivation.php</filename>
+		<filename>index.html</filename>
+		<folder>emailactivation</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">en-GB.plg_user_emailactivation.ini</language>
+		<language tag="pl-PL">pl-PL.plg_user_emailactivation.ini</language>
+		<language tag="ru-RU">ru-RU.plg_user_emailactivation.ini</language>
+		<language tag="nl-NL">nl-NL.plg_user_emailactivation.ini</language>
+		<language tag="de-DE">de-DE.plg_user_emailactivation.ini</language>
+		<language tag="fr-FR">fr-FR.plg_user_emailactivation.ini</language>
+		<language tag="es-ES">es-ES.plg_user_emailactivation.ini</language>
+		<language tag="it-IT">it-IT.plg_user_emailactivation.ini</language>
+	</languages>
+	<config>
+
+		<fields name="params">
+
+			<fieldset name="basic">
+				<field name="groups" type="usergroup"
+					multiple="true"
+					size="12"
+					description="Users of selected groups will not be required to proof their new email. No email will be sent."
+					label="Do not require activation from:"
+				/>
+				<field name="redirect_url" type="text"
+					default=""
+					description="Redirect to URL after new email has been activated"
+					label="Redirect after activation"
+				/>
+			</fieldset>
+
+			<fieldset name="advanced">
+                <field name="exec" type="textarea"
+                    description="Code to be executed after succesfull activation&lt;br /&gt;
+                        Variables in scope: array $user, string $oldEmail, string $email"
+                    label="Execute on succesfull activation"
+                />
+
+				<field name="block" type="radio"
+					default="0"
+					description="User account will be blocked by the time they activate new email. &lt;br /&gt;
+						&lt;b&gt;&lt;u&gt;Attention&lt;/u&gt;&lt;/b&gt;: Disabling this option after it was enabled will make pending activations impossible. &lt;br /&gt;
+						May cause issues if an user types in his email wrongly"
+					label="Block user account after change"
+				>
+					<option value="0">No</option>
+					<option value="1">Yes</option>
+				</field>
+				<field name="logout" type="radio"
+					default="0"
+					description="Users will be forced to log out after they change their email. &lt;br /&gt;
+						&lt;b&gt;&lt;u&gt;Attention&lt;/u&gt;&lt;/b&gt;: No message will be shown! &lt;br /&gt;
+						May cause issues if an user types in his email wrongly"
+					label="Force user to logout after change"
+				>
+					<option value="0">No</option>
+					<option value="1">Yes</option>
+				</field>
+			</fieldset>
+
+		</fields>
+	</config>
+     <updateservers>
+        <server type="extension" priority="2" name="Email Activation Updates">http://woodzu.vipserv.org/joomla/plg_emailactivation.xml</server>
+     </updateservers>
+</extension>
