@@ -25,4 +25,4 @@ This is simple. Features:
 - Execute your custom code upon successful activation
 - It is secure!
 
-![Plugin Options](http://woodzu.vipserv.org//images/demo/activation_3x.png "Plugin options")
+![Plugin Options](http://email-act.woodzu.vipserv.org/images/demo/activation_3x.png "Plugin options")
