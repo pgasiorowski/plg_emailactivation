@@ -26,3 +26,6 @@ This is simple. Features:
 - It is secure!
 
 ![Plugin Options](http://email-act.woodzu.vipserv.org/images/demo/activation_3x.png "Plugin options")
+
+You can test  it at http://email-act.woodzu.vipserv.org/!
+Just login as demo using password demo and try changing user's email.
