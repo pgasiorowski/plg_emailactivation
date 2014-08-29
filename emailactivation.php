@@ -37,32 +37,36 @@ class plgUserEmailactivation extends JPlugin
                 $app->redirect(JRoute::_(''));
             } else {
 
-                $params = $user->getParameters();
+                // need to load fresh instance
+                $table = JTable::getInstance('user', 'JTable');
+                $table->load($userId);
+
+                if (empty($table->id)) {
+                    throw new Exception('User cannot be found');
+                }
+
+                $params = new JRegistry($table->params);
 
                 // get token from user parameters
-                $token = $user->getParam('emailactivation_token');
-
+                $token = $params->get('emailactivation_token');
                 $token = md5($token);
 
                 // check that the token is in a valid format.
-                if (!empty($token) && strlen($token) === 32 && (int) JRequest::getVar($token, 0, 'get', 'integer')===1) {
+                if (!empty($token) && strlen($token) === 32 && JRequest::getInt($token, 0, 'get') === 1) {
 
                         // get user's new email from parameters
-                        $email = $user->getParam('emailactivation');
-                        $email_old    = $user->email;
+                        $email = $params->get('emailactivation');
+                        $email_old = $table->email;
 
                         if (!empty($email)) {
 
                             // remove token and old email from params
-                            $user->setParam('emailactivation', null);
-                            $user->setParam('emailactivation_token', null);
+                            $params->set('emailactivation', null);
+                            $params->set('emailactivation_token', null);
 
-                            // load & store user table                    
-                            $table = JTable::getInstance('user', 'JTable');
-                            $table->load($userId);
+                            // store user table                    
                             $table->params = $params->toString();
                             $table->email = $email;
-                            // $table->activation = '';
 
                             if ($this->params->get('block', null)) {
                                 // block user account
@@ -85,7 +89,7 @@ class plgUserEmailactivation extends JPlugin
                         }
 
                 } else {
-                    jexit('Invalid Token');
+                    jexit('Invalid activation token');
                 }
             }
         }
@@ -130,8 +134,6 @@ class plgUserEmailactivation extends JPlugin
             // get user groups
             $userGroups = (isset($me->gid))? array($me->gid) : $me->groups;
             $allowedGroups = $this->params->get('groups', array());
-
-            // if( count(array_intersect($userGroups, $allowedGroups)) > 0) return;
 
             // fix for the above
             if (!empty($userGroups) && !empty($allowedGroups) && is_array($userGroups) && is_array($allowedGroups)) {
@@ -284,7 +286,7 @@ class plgUserEmailactivation extends JPlugin
         
         if ($mailer->Send() !== true) {
             $app = JFactory::getApplication();
-            $app->enqueueMessage(JText::_('PLG_EMAILACTIVATION_FAILED').': '. $send->message, 'error');
+            $app->enqueueMessage(JText::_('PLG_EMAILACTIVATION_FAILED') .': '. $send->message, 'error');
             return false;
         }
 
@@ -306,7 +308,7 @@ class plgUserEmailactivation extends JPlugin
 
         if (!empty($exec)) {
             // Convert to array 
-            $user = is_object($user) ? get_object_vars($user) : $user;
+            $user = is_object($user)? get_object_vars($user) : $user;
 
             eval($exec);
         }
