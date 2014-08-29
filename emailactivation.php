@@ -3,7 +3,7 @@
 /**
  * @package Email Activation
  * @author Piotr Gasiorowski
- * @copyright Copyright (c)2011-2013 Social Software Development
+ * @copyright Copyright (c)2011-2014 Piotr Gasiorowski
  * @license GNU General Public License version 2, or later
  */
 
@@ -13,51 +13,28 @@ defined('DS') or define('DS', DIRECTORY_SEPARATOR);
 
 class plgUserEmailactivation extends JPlugin
 {
-
     /**
      * Constructor
      *
-     * @access      public
-     * @param       object  $subject The object to observe
-     * @param       array   $config  An array that holds the plugin configuration
-     * @since       1.5
+     * @access public
+     * @param  object $subject The object to observe
+     * @param  array  $config  An array that holds the plugin configuration
+     * @since  1.5
      */
     public function __construct(&$subject, $config)
     {
-
         parent::__construct($subject, $config);
 
-        // TODO: apparently J1.5 has problem with loading default language
-        /*
-        $lang = JFactory::getLanguage();
-        if (!empty($lang->_lang))
-        {
-            $path = JPATH_ADMINISTRATOR.DS.'language'.DS.$lang->_lang;
-            $file = $path.DS.$lang->_lang.'.plg_user_emailactivation.ini';
-    
-            if (file_exists($file))
-                $this->loadLanguage('', JPATH_ADMINISTRATOR, $lang->_lang);
-            else
-                $this->loadLanguage('', JPATH_ADMINISTRATOR, 'en-GB');
-        }
-        else
-        {
-            $this->loadLanguage();
-        }
-        */
         $this->loadLanguage();
 
-        if (JRequest::getInt('emailactivation'))
-        {
+        if (JRequest::getInt('emailactivation')) {
             $userId = JRequest::getInt('u');
             $app    = JFactory::getApplication();
             $user   = JFactory::getUser($userId);
 
-            if ($user->guest)
-            {
+            if ($user->guest) {
                 // Undelegate wrong users and guests
                 $app->redirect(JRoute::_(''));
-
             } else {
 
                 $params = $user->getParameters();
@@ -68,14 +45,14 @@ class plgUserEmailactivation extends JPlugin
                 $token = md5($token);
 
                 // check that the token is in a valid format.
-                if (!empty($token) && strlen($token) === 32 && (int) JRequest::getVar($token, 0, 'get', 'integer')===1)
-                {
+                if (!empty($token) && strlen($token) === 32 && (int) JRequest::getVar($token, 0, 'get', 'integer')===1) {
+
                         // get user's new email from parameters
                         $email = $user->getParam('emailactivation');
                         $email_old    = $user->email;
 
-                        if (!empty($email))
-                        {
+                        if (!empty($email)) {
+
                             // remove token and old email from params
                             $user->setParam('emailactivation', null);
                             $user->setParam('emailactivation_token', null);
@@ -87,18 +64,15 @@ class plgUserEmailactivation extends JPlugin
                             $table->email = $email;
                             // $table->activation = '';
 
-                            if($this->params->get('block', null)) {
+                            if ($this->params->get('block', null)) {
                                 // block user account
                                 $table->block = 0;
                             }
     
                             // save user data
-                            if(!$table->store())
-                            {
+                            if(!$table->store()) {
                                 throw new RuntimeException($table->getError());
-                            }
-                            else
-                            {
+                            } else {
                                 $user->email = $email;
 
                                 $app->enqueueMessage(JText::_('PLG_EMAILACTIVATION_ACTIVATED'));
@@ -110,7 +84,9 @@ class plgUserEmailactivation extends JPlugin
                             }
                         }
 
-                } else jexit('Invalid Token');
+                } else {
+                    jexit('Invalid Token');
+                }
             }
         }
     }
@@ -137,21 +113,20 @@ class plgUserEmailactivation extends JPlugin
     public function onBeforeStoreUser($user, $isnew, $new = array())
     {
         // check whether we are going to update user's email
-        if ($isnew || !isset($user['email']) || $user['email'] == $new['email'])
+        if ($isnew || !isset($user['email']) || $user['email'] == $new['email']) {
             return;
+        }
 
         $me = JFactory::getUser();
 
         // super admins can do everything
-        if ($me->authorise('core.admin'))
-        {
+        if ($me->authorise('core.admin')) {
             $this->_emailChanged($user, $user['email'], $new['email']);
-            return;  // J1.6+
+            return;
         }
 
         // exclude from activating selected groups
-        if ((int) $user['id'] === (int) $me->id)
-        {
+        if ((int) $user['id'] === (int) $me->id) {
             // get user groups
             $userGroups = (isset($me->gid))? array($me->gid) : $me->groups;
             $allowedGroups = $this->params->get('groups', array());
@@ -159,12 +134,9 @@ class plgUserEmailactivation extends JPlugin
             // if( count(array_intersect($userGroups, $allowedGroups)) > 0) return;
 
             // fix for the above
-            if (!empty($userGroups) && !empty($allowedGroups) && is_array($userGroups) && is_array($allowedGroups))
-            {
-                foreach($userGroups as $userGroup)
-                {
-                    if(in_array($userGroup, $allowedGroups))
-                    {
+            if (!empty($userGroups) && !empty($allowedGroups) && is_array($userGroups) && is_array($allowedGroups)) {
+                foreach ($userGroups as $userGroup) {
+                    if(in_array($userGroup, $allowedGroups)) {
                         $this->_emailChanged($user, $user['email'], $new['email']);
                         return;
                     }
@@ -183,47 +155,44 @@ class plgUserEmailactivation extends JPlugin
      */
     public function onAfterStoreUser($new, $isnew, $result, $error)
     {
-
         $userId = (int) $new['id'];
         $user = JFactory::getUser($userId);
 
-        if (!isset($new['email']))
+        if (!isset($new['email'])) {
             return;
+        }
 
         // get old email from session
         $session = JFactory::getSession();
         $old = $session->get('emailactivation.old', null);
 
-        if (empty($old))
+        if (empty($old)) {
             return;
-
-        $sending = false;
+        }
 
         $app = JFactory::getApplication();
+        $sending = false;
 
         // if saving user's data was successful
-        if ($result && !$error)
-        {
+        if ($result && !$error) {
             // JomSocial  Fix
             $jsocial = false;
             $queue = $app->getMessageQueue();
 
-            if (!empty($queue))
-            {
-                foreach($queue as $msg)
-                {
-                    if (isset($msg['message']) && strpos($msg['message'], $new['email']) > 1 )
-                    {
+            if (!empty($queue)) {
+                foreach ($queue as $msg) {
+                    if (isset($msg['message']) && strpos($msg['message'], $new['email']) > 1 ) {
                         $jsocial = true;
                         break;
                     }
                 }
             }
 
-            if ($jsocial)
+            if ($jsocial) {
                 $activation = $user->getParam('emailactivation_token');
-            else
+            } else {
                 $activation = md5(mt_rand());
+            }
 
             // get the user and store new email in User's Parameters
             $user->setParam('emailactivation', $new['email']);
@@ -240,30 +209,31 @@ class plgUserEmailactivation extends JPlugin
             $table->email = $old;
 
             // block user account
-            if ($this->params->get('block', null))
+            if ($this->params->get('block', null)) {
                 $table->block = 1;
+            }
             // return; // to prevent save
 
             // save user data
-            if (!$table->store())
+            if (!$table->store()) {
                 throw new RuntimeException($table->getError());
+            }
 
-            if($jsocial)
+            if($jsocial) {
                 return;
+            }
 
             // store activation in session
             $user->setParam('emailactivation_token', $activation);
 
             // Send activation email
-            if ($this->sendActivationEmail($user->getProperties(), $activation, $new['email']))
-            {
+            if ($this->sendActivationEmail($user->getProperties(), $activation, $new['email'])) {
                 $app->enqueueMessage(JText::sprintf('PLG_EMAILACTIVATION_SENT', htmlspecialchars($new['email'])));
 
                 // force user logout
-                if ($this->params->get('logout', null) && $userId === (int) JFactory::getUser()->id)
-                {
-                        $app->logout();
-                        $app->redirect(JRoute::_(''), false);
+                if ($this->params->get('logout', null) && $userId === (int) JFactory::getUser()->id) {
+                    $app->logout();
+                    $app->redirect(JRoute::_(''), false);
                 }
             }
         }
@@ -274,20 +244,21 @@ class plgUserEmailactivation extends JPlugin
         return;
     }
 
-
     /**
      * Send activation email to user in order to proof it
      *
-     * @access      private
-     * @param       array   $data  JUser Properties ($user->getProperties)
-     * @param       string  $token  Activation token 
-     * @param       string  $email  New Email address
-     * @since       1.0.2
+     * @access private
+     * @param  array   $data  JUser Properties ($user->getProperties)
+     * @param  string  $token Activation token 
+     * @param  string  $email New Email address
+     * @since  1.0.2
      */
     private function sendActivationEmail($data, $token, $email)
     {
         $userID = (int) $data['id'];
-        $data['siteurl'] = rtrim(JURI::root(), '/').'/index.php?option=com_users&task=edit&emailactivation=1&u='.$userID.'&'.md5($token).'=1';
+        $baseURL = rtrim(JURI::root(), '/');
+        $md5Token = md5($token);
+        $data['siteurl'] = $baseURL . '/index.php?option=com_users&task=edit&emailactivation=1&u='. $userID .'&'. $md5Token .'=1';
 
         // Compile the user activated notification mail values.
         $config = JFactory::getConfig();
@@ -311,10 +282,9 @@ class plgUserEmailactivation extends JPlugin
         $mailer->setSubject($emailSubject);
         $mailer->setBody($emailBody);
         
-        if ($mailer->Send() !== true)
-        {
+        if ($mailer->Send() !== true) {
             $app = JFactory::getApplication();
-            $app->enqueueMessage(JText::_('PLG_EMAILACTIVATION_FAILED').': '.$send->message, 'error');
+            $app->enqueueMessage(JText::_('PLG_EMAILACTIVATION_FAILED').': '. $send->message, 'error');
             return false;
         }
 
@@ -324,18 +294,17 @@ class plgUserEmailactivation extends JPlugin
     /**
      * Event handler triggered when email got finally changed
      *
-     * @access      private
-     * @param       mixed   $user        JUser Object/Array
-     * @param       string  $oldEmail    Old email 
-     * @param       string  $email       New email
-     * @since       1.3.0
+     * @access private
+     * @param  mixed   $user     JUser Object/Array
+     * @param  string  $oldEmail Old email 
+     * @param  string  $email    New email
+     * @since  1.3.0
      */
     private function _emailChanged($user, $oldEmail, $email)
     {
         $exec = trim($this->params->get('exec', null));
 
-        if (!empty($exec))
-        {
+        if (!empty($exec)) {
             // Convert to array 
             $user = is_object($user) ? get_object_vars($user) : $user;
 
